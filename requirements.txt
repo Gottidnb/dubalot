@@ -1,0 +1,2 @@
+# dubalot dependencies
+# Requires ffmpeg to be installed on the system (https://ffmpeg.org/download.html)

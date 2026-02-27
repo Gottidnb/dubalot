@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dubalot"
+version = "0.1.0"
+description = "Translate video to a target language while preserving voice, background audio, and lip sync"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+dependencies = [
+    "moviepy>=1.0.3",
+    "openai-whisper>=20231117",
+    "deep-translator>=1.11.4",
+    "coqui-tts>=0.24.0",
+    "librosa>=0.10.1",
+    "soundfile>=0.12.1",
+    "pydub>=0.25.1",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "torch>=2.0.0",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+lipsync = [
+    # Wav2Lip must be installed manually from https://github.com/Rudrabha/Wav2Lip
+]
+source-separation = [
+    "demucs>=4.0.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock>=3.10",
+]
+
+[project.scripts]
+dubalot = "dubalot.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

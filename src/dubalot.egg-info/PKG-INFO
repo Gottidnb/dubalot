@@ -1,3 +1,28 @@
+Metadata-Version: 2.4
+Name: dubalot
+Version: 0.1.0
+Summary: Translate video to a target language while preserving voice, background audio, and lip sync
+License: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: moviepy>=1.0.3
+Requires-Dist: openai-whisper>=20231117
+Requires-Dist: deep-translator>=1.11.4
+Requires-Dist: coqui-tts>=0.24.0
+Requires-Dist: librosa>=0.10.1
+Requires-Dist: soundfile>=0.12.1
+Requires-Dist: pydub>=0.25.1
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: scipy>=1.11.0
+Requires-Dist: torch>=2.0.0
+Requires-Dist: tqdm>=4.65.0
+Provides-Extra: lipsync
+Provides-Extra: source-separation
+Requires-Dist: demucs>=4.0.0; extra == "source-separation"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.10; extra == "dev"
+
 # dubalot
 
 > Translate foreign video to native language with the same voice.

@@ -1,2 +1,0 @@
-[console_scripts]
-dubalot = dubalot.cli:main

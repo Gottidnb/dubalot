@@ -1,0 +1,7 @@
+TTS>=0.22.0
+deep-translator>=1.11.4
+moviepy>=1.0.3
+openai-whisper>=20231117
+pydub>=0.25.1
+torch>=2.0.0
+tqdm>=4.65.0

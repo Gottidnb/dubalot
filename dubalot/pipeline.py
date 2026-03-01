@@ -12,7 +12,9 @@ Flow
 
 from __future__ import annotations
 
+import argparse
 import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -151,3 +153,71 @@ class DubalotPipeline:
 
             self._whisper = whisper.load_model(self.whisper_model)
         return self._whisper
+
+
+def main(argv=None):
+    """CLI entry point: ``dubalot -i video.mp4 -t es -o video_es.mp4``."""
+    parser = argparse.ArgumentParser(
+        prog="dubalot",
+        description="Translate a foreign-language video to a target language with the same voice.",
+    )
+    parser.add_argument(
+        "-i", "--input",
+        required=True,
+        metavar="INPUT",
+        help="Path to the source video file (e.g. video.mp4).",
+    )
+    parser.add_argument(
+        "-o", "--output",
+        required=True,
+        metavar="OUTPUT",
+        help="Path for the dubbed output video (e.g. video_es.mp4).",
+    )
+    parser.add_argument(
+        "-t", "--target-language",
+        default="en",
+        metavar="LANG",
+        help="Target language BCP-47 code (e.g. en, es, fr). Default: en.",
+    )
+    parser.add_argument(
+        "--whisper-model",
+        default="base",
+        metavar="MODEL",
+        help="Whisper model size: tiny, base, small, medium, large. Default: base.",
+    )
+    parser.add_argument(
+        "--wav2lip-checkpoint",
+        default=None,
+        metavar="PATH",
+        help="Optional path to a Wav2Lip .pth checkpoint for lip animation.",
+    )
+    parser.add_argument(
+        "--wav2lip-script",
+        default=None,
+        metavar="PATH",
+        help="Optional path to Wav2Lip inference.py script.",
+    )
+
+    args = parser.parse_args(argv)
+
+    if not os.path.isfile(args.input):
+        parser.error(f"Input file not found: {args.input}")
+
+    lip_syncer = LipSyncer(
+        wav2lip_checkpoint=args.wav2lip_checkpoint,
+        wav2lip_script=args.wav2lip_script,
+    )
+    pipeline = DubalotPipeline(
+        target_language=args.target_language,
+        lip_syncer=lip_syncer,
+        whisper_model=args.whisper_model,
+    )
+
+    print(f"Dubbing '{args.input}' → '{args.output}' (target: {args.target_language})")
+    output = pipeline.run(args.input, args.output)
+    print(f"Done. Output saved to: {output}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

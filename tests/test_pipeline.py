@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch, call
 
 import pytest
 
-from dubalot.pipeline import DubalotPipeline
+from dubalot.pipeline import DubalotPipeline, main
 from dubalot.voice_clone import VoiceCloner
 from dubalot.lip_sync import LipSyncer
 
@@ -144,3 +144,79 @@ class TestPipelineRun:
         mock_vc.synthesise.assert_called_once()
         mock_ls.sync.assert_called_once()
         assert result == os.path.abspath(str(out))
+
+
+# ---------------------------------------------------------------------------
+# main() – CLI entry point
+# ---------------------------------------------------------------------------
+
+class TestMain:
+    def test_missing_input_exits_nonzero(self):
+        with pytest.raises(SystemExit) as exc_info:
+            main(["-o", "/tmp/out.mp4"])
+        assert exc_info.value.code != 0
+
+    def test_missing_output_exits_nonzero(self):
+        with pytest.raises(SystemExit) as exc_info:
+            main(["-i", "video.mp4"])
+        assert exc_info.value.code != 0
+
+    def test_nonexistent_input_raises(self, tmp_path):
+        with pytest.raises(SystemExit) as exc_info:
+            main(["-i", str(tmp_path / "no_such.mp4"), "-o", str(tmp_path / "out.mp4")])
+        assert exc_info.value.code != 0
+
+    def test_runs_pipeline_and_prints(self, tmp_path, capsys):
+        video = tmp_path / "video.mp4"
+        video.write_bytes(b"\x00")
+        out = tmp_path / "out.mp4"
+
+        mock_pipeline = MagicMock(spec=DubalotPipeline)
+        mock_pipeline.run.return_value = str(out)
+
+        with patch("dubalot.pipeline.DubalotPipeline", return_value=mock_pipeline):
+            result = main(["-i", str(video), "-o", str(out), "-t", "es"])
+
+        assert result == 0
+        mock_pipeline.run.assert_called_once_with(str(video), str(out))
+        captured = capsys.readouterr()
+        assert "es" in captured.out
+        assert str(out) in captured.out
+
+    def test_default_target_language_is_en(self, tmp_path, capsys):
+        video = tmp_path / "video.mp4"
+        video.write_bytes(b"\x00")
+        out = tmp_path / "out.mp4"
+
+        mock_pipeline = MagicMock(spec=DubalotPipeline)
+        mock_pipeline.run.return_value = str(out)
+
+        with patch("dubalot.pipeline.DubalotPipeline", return_value=mock_pipeline) as mock_cls:
+            main(["-i", str(video), "-o", str(out)])
+
+        _, kwargs = mock_cls.call_args
+        assert kwargs.get("target_language") == "en"
+
+    def test_wav2lip_args_passed_to_lip_syncer(self, tmp_path, capsys):
+        video = tmp_path / "video.mp4"
+        video.write_bytes(b"\x00")
+        out = tmp_path / "out.mp4"
+        ckpt = str(tmp_path / "model.pth")
+        script = str(tmp_path / "inference.py")
+
+        mock_pipeline = MagicMock(spec=DubalotPipeline)
+        mock_pipeline.run.return_value = str(out)
+
+        with patch("dubalot.pipeline.DubalotPipeline", return_value=mock_pipeline), \
+             patch("dubalot.pipeline.LipSyncer") as mock_ls_cls:
+            main([
+                "-i", str(video), "-o", str(out),
+                "--wav2lip-checkpoint", ckpt,
+                "--wav2lip-script", script,
+            ])
+
+        mock_ls_cls.assert_called_once_with(
+            wav2lip_checkpoint=ckpt,
+            wav2lip_script=script,
+        )
+
